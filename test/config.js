@@ -71,6 +71,7 @@ require.config({
         '*' : {
             'templates/errorscreen.html': 'hbars!templates/errorscreen.html',
             'templates/logo.html': 'hbars!templates/logo.html',
+            'templates/view.html': 'hbars!templates/view.html',
             '../css/styles.less': 'less!css/styles'
         },
         'providers/html5' : {
