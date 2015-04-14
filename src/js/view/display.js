@@ -368,20 +368,20 @@ define([
     // These rules allow click and hover events to reach the provider, instead
     //  of being blocked by the controller element
     //  ** Note : pointer-events will not work on IE < 11
-    _css('.jwplayer .jwcontrols', {
+    _css('.jwplayer .jw-controls', {
         'pointer-events': 'none'
     });
-    _css('.jwplayer.jw-user-inactive .jwcontrols', {
+    _css('.jwplayer.jw-user-inactive .jw-controls', {
         'pointer-events': 'all'
     });
     var acceptClicks = [
-        '.jwplayer .jwcontrols .jwdockbuttons',
-        '.jwplayer .jwcontrols .jwcontrolbar',
-        '.jwplayer .jwcontrols .jw-rightclick',
-        '.jwplayer .jwcontrols .jwskip',
-        '.jwplayer .jwcontrols .jwdisplayIcon', // play and replay button
-        '.jwplayer .jwcontrols .jwpreview', // poster image
-        '.jwplayer .jwcontrols .jwlogo'
+        '.jwplayer .jw-controls .jwdockbuttons',
+        '.jwplayer .jw-controls .jwcontrolbar',
+        '.jwplayer .jw-controls .jw-rightclick',
+        '.jwplayer .jw-controls .jwskip',
+        '.jwplayer .jw-controls .jw-icon-display', // play and replay button
+        '.jwplayer .jw-controls .jwpreview', // poster image
+        '.jwplayer .jw-controls .jwlogo'
     ];
     _css(acceptClicks.join(', '), {
         'pointer-events' : 'all'
