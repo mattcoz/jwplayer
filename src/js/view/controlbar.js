@@ -9,19 +9,20 @@ define([
     'view/thumbs',
     'view/menu',
     'view/overlay',
+    'view/button',
     'utils/css'
-], function(utils, SrtParser, _, events, states, Events, Touch, Thumbs, Menu, Overlay, cssUtils) {
+], function(utils, SrtParser, _, events, states, Events, Touch, Thumbs, Menu, Overlay, Button, cssUtils) {
 
     var _setTransition = cssUtils.transitionStyle,
         _isMobile = utils.isMobile(),
-        _nonChromeAndroid = utils.isAndroid(4, true),
+        //_nonChromeAndroid = utils.isAndroid(4, true),
         _iFramed = (window.top !== window.self),
         _css = cssUtils.css,
 
         /** Controlbar element types * */
         CB_BUTTON = 'button',
         CB_TEXT = 'text',
-        CB_DIVIDER = 'divider',
+        //CB_DIVIDER = 'divider',
         CB_SLIDER = 'slider',
 
         JW_VISIBILITY_TIMEOUT = 250,
@@ -62,7 +63,7 @@ define([
     /** HTML5 Controlbar class * */
     var Controlbar = function(_skin, _api, _model) {
         var _config = _model.componentConfig('controlbar') || {},
-            _dividerElement = _layoutElement('divider', CB_DIVIDER),
+            //_dividerElement = _layoutElement('divider', CB_DIVIDER),
             _defaults = {
                 margin: 8,
                 maxwidth: 800,
@@ -74,7 +75,7 @@ define([
                     left: {
                         position: 'left',
                         elements: [
-                            _layoutElement('play', CB_BUTTON),
+                            _layoutElement('playback-toggle', CB_BUTTON),
                             _layoutElement('prev', CB_BUTTON),
                             _layoutElement('next', CB_BUTTON),
                             _layoutElement('elapsed', CB_TEXT)
@@ -140,18 +141,18 @@ define([
             _dragging = null,
             _cues = [],
             _activeCue,
-            _toggles = {
-                play: 'pause',
-                mute: 'unmute',
-                cast: 'casting',
-                fullscreen: 'normalscreen'
-            },
+            //_toggles = {
+            //    play: 'pause',
+            //    mute: 'unmute',
+            //    cast: 'casting',
+            //    fullscreen: 'normalscreen'
+            //},
 
             _toggleStates = {
-                play: false,
+                //play: false,
                 mute: false,
-                cast: false,
-                fullscreen: _config.fullscreen || false
+                cast: false
+                //fullscreen: _config.fullscreen || false
             },
 
             _buttonMapping = {
@@ -216,7 +217,7 @@ define([
         })();
 
         _controlbar.id = _id;
-        _controlbar.className = 'jwcontrolbar';
+        _controlbar.className = 'jwcontrolbar jw-controlbar';
 
         cssUtils.clearCss(_internalSelector());
         cssUtils.block(_id + 'build');
@@ -336,15 +337,15 @@ define([
                             opacity: 1
                         });
                     }
-                    _toggleButton('play', true);
+                    //_toggleButton('play', true);
                     break;
                 case states.PAUSED:
                     if (!_dragging) {
-                        _toggleButton('play', false);
+                        //_toggleButton('play', false);
                     }
                     break;
                 case states.IDLE:
-                    _toggleButton('play', false);
+                    //_toggleButton('play', false);
                     if (_elements.timeSliderThumb) {
                         cssUtils.style(_elements.timeSliderThumb, {
                             opacity: 0
@@ -399,8 +400,8 @@ define([
             _setBuffer(buffer / 100);
         }
 
-        function _fullscreenHandler(evt) {
-            _toggleButton('fullscreen', evt.fullscreen);
+        function _fullscreenHandler() {
+            //_toggleButton('fullscreen', evt.fullscreen);
             _updateNextPrev();
             if (_this.visible) {
                 _this.show(true);
@@ -566,13 +567,15 @@ define([
             }
         }
 
-        function _buildElement(element, pos) {
+        function _buildElement(element/*, pos*/) {
             switch (element.type) {
                 case CB_TEXT:
                     return _buildText(element.name);
                 case CB_BUTTON:
                     if (element.name !== 'blank') {
-                        return _buildButton(element.name, pos);
+                        var button = new Button(_model, element.name, _buttonMapping[element.name]);
+                        _elements[element.name] = button;
+                        return button;
                     }
                     break;
                 case CB_SLIDER:
@@ -615,110 +618,110 @@ define([
             return element;
         }
 
-        function _buildButton(name, pos) {
-            if (!_getSkinElement(name + 'Button').src) {
-                return null;
-            }
-
-            // Don't show volume or mute controls on mobile, since it's not possible to modify audio levels in JS
-            if (_isMobile && (name === 'mute' || name.indexOf('volume') === 0)) {
-                return null;
-            }
-            // Having issues with stock (non-chrome) Android browser and showing overlays.
-            //  Just remove HD/CC buttons in that case
-            if (_nonChromeAndroid && /hd|cc/.test(name)) {
-                return null;
-            }
-
-
-            var element = _createSpan();
-            var span = _createSpan();
-            var divider = _buildDivider(_dividerElement);
-            var button = _createElement('button');
-            element.className = 'jw' + name;
-            if (pos === 'left') {
-                _appendChild(element, span);
-                _appendChild(element, divider);
-            } else {
-                _appendChild(element, divider);
-                _appendChild(element, span);
-            }
-
-            if (!_isMobile) {
-                button.addEventListener('click', _buttonClickHandler(name), false);
-            } else if (name !== 'hd' && name !== 'cc') {
-                var buttonTouch = new Touch(button);
-                buttonTouch.on(events.touchEvents.TAP, _buttonClickHandler(name));
-            }
-
-            button.innerHTML = '&nbsp;';
-            button.tabIndex = -1;
-            //fix for postbacks on mobile devices when a <form> is used
-            button.setAttribute('type', 'button');
-            _appendChild(span, button);
-
-            var outSkin = _getSkinElement(name + 'Button'),
-                overSkin = _getSkinElement(name + 'ButtonOver'),
-                offSkin = _getSkinElement(name + 'ButtonOff');
-
-
-            _buttonStyle(_internalSelector('.jw' + name + ' button'), outSkin, overSkin, offSkin);
-            var toggle = _toggles[name];
-            if (toggle) {
-                _buttonStyle(_internalSelector('.jw' + name + '.jwtoggle button'), _getSkinElement(toggle + 'Button'),
-                    _getSkinElement(toggle + 'ButtonOver'));
-            }
-
-            if (_toggleStates[name]) {
-                utils.addClass(element, 'jwtoggle');
-            } else {
-                utils.removeClass(element, 'jwtoggle');
-            }
-
-            _elements[name] = element;
-
-            return element;
-        }
-
-        function _buttonStyle(selector, out, over, off) {
-            if (!out || !out.src) {
-                return;
-            }
-
-            _css(selector, {
-                width: out.width,
-                background: 'url(' + out.src + ') no-repeat center',
-                'background-size': _elementSize(out)
-            });
-
-            if (over.src && !_isMobile) {
-                _css(selector + ':hover,' + selector + '.off:hover', {
-                    background: 'url(' + over.src + ') no-repeat center',
-                    'background-size': _elementSize(over)
-                });
-            }
-
-            if (off && off.src) {
-                _css(selector + '.off', {
-                    background: 'url(' + off.src + ') no-repeat center',
-                    'background-size': _elementSize(off)
-                });
-            }
-        }
-
-        function _buttonClickHandler(name) {
-            return function(evt) {
-                if (_buttonMapping[name]) {
-                    _buttonMapping[name]();
-                    if (_isMobile) {
-                        _this.trigger(events.JWPLAYER_USER_ACTION);
-                    }
-                }
-                if (evt.preventDefault) {
-                    evt.preventDefault();
-                }
-            };
-        }
+        //function _buildButton(name, pos) {
+        //    if (!_getSkinElement(name + 'Button').src) {
+        //        return null;
+        //    }
+        //
+        //    // Don't show volume or mute controls on mobile, since it's not possible to modify audio levels in JS
+        //    if (_isMobile && (name === 'mute' || name.indexOf('volume') === 0)) {
+        //        return null;
+        //    }
+        //    // Having issues with stock (non-chrome) Android browser and showing overlays.
+        //    //  Just remove HD/CC buttons in that case
+        //    if (_nonChromeAndroid && /hd|cc/.test(name)) {
+        //        return null;
+        //    }
+        //
+        //
+        //    var element = _createSpan();
+        //    var span = _createSpan();
+        //    var divider = _buildDivider(_dividerElement);
+        //    var button = _createElement('button');
+        //    element.className = 'jw' + name;
+        //    if (pos === 'left') {
+        //        _appendChild(element, span);
+        //        _appendChild(element, divider);
+        //    } else {
+        //        _appendChild(element, divider);
+        //        _appendChild(element, span);
+        //    }
+        //
+        //    if (!_isMobile) {
+        //        button.addEventListener('click', _buttonClickHandler(name), false);
+        //    } else if (name !== 'hd' && name !== 'cc') {
+        //        var buttonTouch = new Touch(button);
+        //        buttonTouch.on(events.touchEvents.TAP, _buttonClickHandler(name));
+        //    }
+        //
+        //    button.innerHTML = '&nbsp;';
+        //    button.tabIndex = -1;
+        //    //fix for postbacks on mobile devices when a <form> is used
+        //    button.setAttribute('type', 'button');
+        //    _appendChild(span, button);
+        //
+        //    var outSkin = _getSkinElement(name + 'Button'),
+        //        overSkin = _getSkinElement(name + 'ButtonOver'),
+        //        offSkin = _getSkinElement(name + 'ButtonOff');
+        //
+        //
+        //    _buttonStyle(_internalSelector('.jw' + name + ' button'), outSkin, overSkin, offSkin);
+        //    var toggle = _toggles[name];
+        //    if (toggle) {
+        //        _buttonStyle(_internalSelector('.jw' + name + '.jwtoggle button'), _getSkinElement(toggle + 'Button'),
+        //            _getSkinElement(toggle + 'ButtonOver'));
+        //    }
+        //
+        //    if (_toggleStates[name]) {
+        //        utils.addClass(element, 'jwtoggle');
+        //    } else {
+        //        utils.removeClass(element, 'jwtoggle');
+        //    }
+        //
+        //    _elements[name] = element;
+        //
+        //    return element;
+        //}
+        //
+        //function _buttonStyle(selector, out, over, off) {
+        //    if (!out || !out.src) {
+        //        return;
+        //    }
+        //
+        //    _css(selector, {
+        //        width: out.width,
+        //        background: 'url(' + out.src + ') no-repeat center',
+        //        'background-size': _elementSize(out)
+        //    });
+        //
+        //    if (over.src && !_isMobile) {
+        //        _css(selector + ':hover,' + selector + '.off:hover', {
+        //            background: 'url(' + over.src + ') no-repeat center',
+        //            'background-size': _elementSize(over)
+        //        });
+        //    }
+        //
+        //    if (off && off.src) {
+        //        _css(selector + '.off', {
+        //            background: 'url(' + off.src + ') no-repeat center',
+        //            'background-size': _elementSize(off)
+        //        });
+        //    }
+        //}
+        //
+        //function _buttonClickHandler(name) {
+        //    return function(evt) {
+        //        if (_buttonMapping[name]) {
+        //            _buttonMapping[name]();
+        //            if (_isMobile) {
+        //                _this.trigger(events.JWPLAYER_USER_ACTION);
+        //            }
+        //        }
+        //        if (evt.preventDefault) {
+        //            evt.preventDefault();
+        //        }
+        //    };
+        //}
 
 
         function _play() {
@@ -861,17 +864,17 @@ define([
             return null;
         }
 
-        function _buildDivider(divider) {
-            var element = _buildImage(divider.name);
-            if (!element) {
-                element = _createSpan();
-                element.className = 'jwblankDivider';
-            }
-            if (divider.className) {
-                element.className += ' ' + divider.className;
-            }
-            return element;
-        }
+        //function _buildDivider(divider) {
+        //    var element = _buildImage(divider.name);
+        //    if (!element) {
+        //        element = _createSpan();
+        //        element.className = 'jwblankDivider';
+        //    }
+        //    if (divider.className) {
+        //        element.className += ' ' + divider.className;
+        //    }
+        //    return element;
+        //}
 
         function _showHd() {
             if (_levels.length > 2) {
@@ -880,9 +883,9 @@ define([
                     _hdTimer = undefined;
                 }
                 cssUtils.block(_id); // unblock on position overlay
-                _hdOverlay.show();
+                //_hdOverlay.show();
                 _positionOverlay('hd', _hdOverlay);
-                _hideOverlays('hd');
+                //_hideOverlays('hd');
             }
         }
 
@@ -893,9 +896,9 @@ define([
                     _ccTimer = undefined;
                 }
                 cssUtils.block(_id); // unblock on position overlay
-                _ccOverlay.show();
+                //_ccOverlay.show();
                 _positionOverlay('cc', _ccOverlay);
-                _hideOverlays('cc');
+                //_hideOverlays('cc');
             }
         }
 
@@ -1511,17 +1514,17 @@ define([
 
         function _buildGroup(pos) {
             var elem = _createSpan();
-            elem.className = 'jwgroup jw' + pos;
+            elem.className = 'jwgroup jw' + pos + ' jw-controlbar--'+pos+'-group';
             _groups[pos] = elem;
             if (_layout[pos]) {
-                _buildElements(_layout[pos], _groups[pos], pos);
+                _buildElements(_layout[pos], _groups[pos]/*, pos*/);
             }
         }
 
-        function _buildElements(group, container, pos) {
+        function _buildElements(group, container/*, pos*/) {
             if (group && group.elements.length > 0) {
                 for (var i = 0; i < group.elements.length; i++) {
-                    var element = _buildElement(group.elements[i], pos);
+                    var element = _buildElement(group.elements[i]/*, pos*/);
                     if (element) {
                         if (group.elements[i].name === 'volume' && element.vertical) {
                             _volumeOverlay = new Overlay(_id + '_volumeOverlay', _skin);
@@ -1785,7 +1788,10 @@ define([
         }
 
         function _appendChild(parent, child) {
-            parent.appendChild(child);
+            var newParent = (parent.element) ? parent.element() : parent;
+            var newChild = (child.element) ? child.element() : child;
+
+            newParent.appendChild(newChild);
         }
 
 

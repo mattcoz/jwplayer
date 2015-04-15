@@ -26,7 +26,7 @@ define([
         _isIPod = utils.isIPod(),
         PLAYER_CLASS = 'jwplayer',
         ASPECT_MODE = 'aspectMode',
-        FULLSCREEN_SELECTOR = '.' + PLAYER_CLASS + '.jwfullscreen',
+        FULLSCREEN_SELECTOR = '.' + PLAYER_CLASS + '.jw-flag-fullscreen',
         VIEW_MAIN_CONTAINER_CLASS = 'jwmain',
         VIEW_VIDEO_CONTAINER_CLASS = 'jwvideo',
         VIEW_CONTROLS_CONTAINER_CLASS = 'jwcontrols',
@@ -386,7 +386,6 @@ define([
                     _stateHandler(null, _model.get('state'));
                     _responsiveListener();
                 }
-
             });
 
             _stateHandler(null, states.IDLE);
@@ -854,9 +853,9 @@ define([
         }
 
         function _toggleDOMFullscreen(playerElement, fullscreenState) {
-            utils.removeClass(playerElement, 'jwfullscreen');
+            utils.removeClass(playerElement, 'jw-flag-fullscreen');
             if (fullscreenState) {
-                utils.addClass(playerElement, 'jwfullscreen');
+                utils.addClass(playerElement, 'jw-flag-fullscreen');
                 cssUtils.style(document.body, {
                     'overflow-y': JW_CSS_HIDDEN
                 });
